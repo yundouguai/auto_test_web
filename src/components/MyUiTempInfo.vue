@@ -1,6 +1,7 @@
 <template>
     <div>
-        <el-input v-model="likeTempName" placeholder="按模板名称模糊查询" @keyup.enter.native="get_ui_case(page, size, likeTempName)">
+        <el-input v-model="likeTempName" placeholder="按模板名称模糊查询"
+            @keyup.enter.native="get_ui_case(page, size, likeTempName)">
             <template #prepend>模板名称</template>
             <template #append>
                 <el-button plain @click="get_ui_case(page, size, likeTempName)">搜索</el-button>
@@ -19,18 +20,44 @@
             <el-table-column label="成功" prop="success" width="60px" align="center"></el-table-column>
             <el-table-column label="失败" prop="fail" width="60px" align="center"></el-table-column>
             <el-table-column label="创建时间" prop="created_at" align="center"></el-table-column>
-            <el-table-column label="操作" align="center" width="400px">
+            <el-table-column label="操作" align="center" width="350px">
                 <template #default="scope">
-                    <el-button type="success" plain :loading="scope.row.runLoading"
-                        @click="getCaseInfo(scope.row)">运行</el-button>&nbsp;
+                    <el-tooltip content="运行用例" placement="top-end" effect="customized">
+                        <el-button :icon="CircleCheck" type="success" plain :loading="scope.row.runLoading"
+                            @click="getCaseInfo(scope.row)"></el-button>
+                    </el-tooltip>
+
                     <el-button-group class="ml-4">
-                        <el-button type="primary" plain @click="getUiTempData(scope.row)"
-                            :loading="scope.row.dataLoading">编辑</el-button>
-                        <el-button type="primary" plain @click="getUiCaseData(scope.row)"
-                            :loading="scope.row.CaseLoading">数据</el-button>
-                    </el-button-group>&nbsp;
-                    <el-button type="danger" plain :loading="scope.row.delLoading" @click="delDialogVisible(scope.row)">删除
-                    </el-button>&nbsp;
+                        <el-tooltip content="测试用例文本详情" placement="top-end" effect="customized">
+                            <el-button :icon="Edit" type="primary" plain @click="getUiTempData(scope.row)"
+                                :loading="scope.row.dataLoading"></el-button>
+                        </el-tooltip>
+
+                        <el-popover title="确定复制？" placement="top" trigger="focus">
+                            <div style="text-align: right; margin: 0">
+                                <el-button size="small" type="primary" @click="copyCase(scope.row)">是</el-button>
+                            </div>
+                            <template #reference>
+                                <el-button :loading="scope.row.copyLoading" :icon="DocumentCopy" type="primary"
+                                    plain></el-button>
+                            </template>
+                        </el-popover>
+
+                        <el-tooltip content="查看提取的变量数据，没有则404" placement="top-end" effect="customized">
+                            <el-button :icon="Document" type="primary" plain @click="getUiCaseData(scope.row)"
+                                :loading="scope.row.CaseLoading"></el-button>
+                        </el-tooltip>
+                    </el-button-group>
+
+                    <el-popover title="确定删除？" placement="top" trigger="focus">
+                        <div style="text-align: right; margin: 0">
+                            <el-button size="small" type="primary" @click="delUiTemp(scope.row)">是</el-button>
+                        </div>
+                        <template #reference>
+                            <el-button :loading="scope.row.delLoading" :icon="Delete" type="danger" plain></el-button>
+                        </template>
+                    </el-popover>
+
                     <el-button type="Info" plain>
                         <el-link :href="scope.row.allureReport" target="_blank" :underline="false">报告</el-link>
                     </el-button>
@@ -43,7 +70,7 @@
             :total=uiTempTotal @size-change="handleSizeChange" @current-change="handleCurrentChange" />
 
         <!-- 运行用例弹窗 -->
-        <el-dialog v-model="dialogVisible" title="Tips" width="40%"
+        <el-dialog class="confirm" v-model="dialogVisible" title="Tips" width="50%"
             @close='browserId = null, headless = true, gatherId = null'>
             <span>执行用例 [ {{ uiTempId }} - {{ uiTempName }} ]</span>
             <br>
@@ -77,15 +104,15 @@
         </el-dialog>
 
         <!-- 编辑器弹窗 -->
-        <el-dialog v-model='dialogUiMonaco' width="70%" title="Python页面编辑器" :close-on-click-modal=false
-            :close-on-press-escape=false @close='dialogUiMonaco = false' draggable>
+        <el-dialog class="mc" v-model='dialogUiMonaco' width="70%" title="Python页面编辑器" :close-on-click-modal=false
+            @close='dialogUiMonaco = false' draggable>
             <monaco-editor v-if="dialogUiMonaco" :ui-temp-id="uiTempId" :ui-temp-name="uiTempName"
                 :project-name="projectName" :ui-temp-value="uiTempValue"></monaco-editor>
         </el-dialog>
 
         <!-- 数据详情的弹窗 -->
-        <el-dialog v-model="dialogGather" title="Tips" width="60%" @close='dialogGather = false' :close-on-click-modal=false
-            :close-on-press-escape=false>
+        <el-dialog class="confirm" v-model="dialogGather" title="Tips" width="60%" @close='dialogGather = false'
+            :close-on-click-modal=false>
             <el-table v-loading='loading' :data="gatherInfo" row-key="case_id" stripe fit>
                 <el-table-column label="CaseId" prop="id" type="index" :index="indexMethodGather" width="100%"
                     align="center"></el-table-column>
@@ -106,24 +133,13 @@
                 </span>
             </template>
         </el-dialog>
-
-        <!-- 删除的窗口 -->
-        <el-dialog v-model="delDialog" title="Tips" width="30%">
-            <span>删除Playwright模板和测试数据 [ {{ uiTempId }} - {{ uiTempName }} ]</span>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="delDialog = false">取消</el-button>
-                    <el-button type="primary" @click="delUiTemp(uiTempRow)">确认</el-button>
-                </span>
-            </template>
-        </el-dialog>
     </div>
 </template>
 
 <script>
 import MonacoEditor from "./MonacoEditor.vue"
 import { ElNotification, ElMessage } from 'element-plus'
-
+import { Edit, Document, Delete, CircleCheck, DocumentCopy } from '@element-plus/icons-vue'
 export default {
     name: "MyUiTempInfo",
 
@@ -140,10 +156,14 @@ export default {
 
     data() {
         return {
+            Edit,
+            Document,
+            Delete,
+            CircleCheck,
+            DocumentCopy,
             loading: !this.uiTempInfo ? true : false,
             uiTempTitle: null,
             dialogUiMonaco: false,
-            delDialog: false,
             uiTempRow: [],
 
             // 详情信息
@@ -280,17 +300,31 @@ export default {
                 }
             }
         },
-
-        // 删除窗口
-        delDialogVisible(row) {
-            this.delDialog = true
-            this.uiTempId = row.id
-            this.uiTempName = row.temp_name
-            this.uiTempRow = row
+        // 复制模板
+        async copyCase(row) {
+            row.copyLoading = true
+            await this.$http({
+                url: '/caseUi/copy/case',
+                method: 'GET',
+                params: {
+                    temp_id: row.id
+                }
+            }).then(
+                function (response) {
+                    ElNotification.success({
+                        title: 'Success',
+                        message: '用例[ ' + row.name + ' ] 复制成功 新用例名称 [ ' + response.data.case_name + ' ]',
+                    })
+                    row.copyLoading = false
+                }
+            ).catch(function (error) {
+                ElMessage.error(error.message)
+                row.copyLoading = false
+            })
+            this.get_ui_case()
         },
         // 删除模板
         async delUiTemp(row) {
-            var flag = false
             row.delLoading = true
             await this.$http({
                 url: '/caseUi/del/playwright/data/' + row.id,
@@ -300,32 +334,34 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '模板[ ' + row.temp_name + ' ] 删除成功',
-                        offset: 200,
                     })
-                    flag = true
                 }
             ).catch(function (error) {
                 ElMessage.error(error.message)
             })
-
-            if (flag) {
-                for (var x in this.uiTempInfo) {
-                    if (this.uiTempInfo[x].id == row.id) {
-                        this.uiTempInfo.splice(x, 1)
-                        break
-                    }
-                }
-            }
-
             row.delLoading = false
-            this.delDialog = false
+            this.get_ui_case()
         },
 
-        getCaseInfo(row) {
+        async getCaseInfo(row) {
             this.dialogVisible = true
             this.uiTempId = row.id
             this.uiTempName = row.temp_name
             this.uiTempRow = row
+
+            var settingInfoList = []
+            await this.$http({
+                url: '/runCase/get/ui/setting/info?case_id=' + this.uiTempId,
+                method: 'GET',
+            }).then(
+                function (response) {
+                    settingInfoList = response.data
+                }
+            ).catch(
+                function (error) {
+                    ElMessage.error(error.message)
+                }
+            )
         },
 
         async runCase(row) {
@@ -333,12 +369,11 @@ export default {
             row.runLoading = true
             var flag = false
             var run_order = null
-            var success = null 
+            var success = null
             var fail = null
             ElNotification.success({
                 title: 'Success',
                 message: '开始执行 用例ID: ' + this.uiTempId,
-                offset: 200,
             })
             await this.$http({
                 url: '/runCase/ui/temp',
@@ -376,7 +411,6 @@ export default {
                 ElNotification.error({
                     title: 'Error',
                     message: '执行失败 用例ID: ' + row.id,
-                    offset: 200,
                 })
                 row.runLoading = false
             })

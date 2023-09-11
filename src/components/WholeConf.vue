@@ -1,5 +1,5 @@
 <template>
-    <el-tabs v-model="activeName" :tab-position="'left'" @tab-click="handleTabClick">
+    <el-tabs v-model="activeName" :tab-position="'top'" type="border-card" @tab-click="handleTabClick">
         <el-tab-pane label="系统列表" name="project">
             <!-- 增加操作 -->
             <el-button v-if="project.length <= 0" :icon="Plus" type="warning" size="small"
@@ -78,61 +78,7 @@
             </el-table>
         </el-tab-pane>
 
-        <el-tab-pane label="统一响应" name="unify_res">
-            <!-- 增加操作 -->
-            <el-button v-if="unify_res.length <= 0" :icon="Plus" type="warning" size="small"
-                @click="addConf('unify')"></el-button>
-            <el-table :data="unify_res" stripe fit empty-text="空">
-                <el-table-column label="名称" align="center" width="150px">
-                    <template #default="scope">
-                        <el-input v-model="scope.row.name" placeholder="名称" />
-                    </template>
-                </el-table-column>
-                <el-table-column label="key" align="center">
-                    <template #default="scope">
-                        <el-input v-model="scope.row.key" placeholder="键" />
-                    </template>
-                </el-table-column>
-                <el-table-column label="value" align="center">
-                    <template #default="scope">
-                        <el-input v-model="scope.row.value" placeholder="值" />
-                    </template>
-                </el-table-column>
-                <el-table-column label="type" align="center">
-                    <template #default="scope">
-                        <el-select v-model="scope.row.type" :placeholder="scope.row.type">
-                            <el-option label="string" value='string' />
-                            <el-option label="number" value='number' />
-                            <el-option label="int" value='int' />
-                            <el-option label="float" value='float' />
-                            <el-option label="boolean" value='boolean' />
-                            <el-option label="null" value='null' />
-                        </el-select>
-                    </template>
-                </el-table-column>
-                <el-table-column label="操作" align="center" width="180px">
-                    <template #default="scope">
-                        <!-- 编辑操作 -->
-                        <el-button :icon="Edit" type="primary" size="small"
-                            v-if="!scope.row.edit && !scope.row.EditDisabled" :disabled="scope.row.EditDisabled"
-                            @click="myEdit(scope.row)"></el-button>
-                        <el-button :icon="Check" type="success" size="small" v-if="scope.row.edit"
-                            @click="unifyCheck(scope.row)"></el-button>
-                        <el-button :icon="Close" type="success" size="small" v-if="scope.row.EditDisabled"
-                            @click="myClose(scope.row)"></el-button>
-                        <!-- 增加操作 -->
-                        <el-button :icon="Plus" type="warning" size="small" @click="addConf('unify')"></el-button>
-                        <!-- 删除操作 -->
-                        <el-button :icon="Delete" type="danger" size="small" v-if="!scope.row.del && !scope.row.delDisabled"
-                            :disabled="scope.row.delDisabled" @click="myDel(scope.row)"></el-button>
-                        <el-button :icon="Check" type="success" size="small" v-if="scope.row.del"
-                            @click="unifyDel(scope.row)"></el-button>
-                        <el-button :icon="Close" type="success" size="small" v-if="scope.row.delDisabled"
-                            @click="myClose(scope.row)"></el-button>
-                    </template>
-                </el-table-column>
-            </el-table>
-        </el-tab-pane>
+
 
         <el-tab-pane label="自定参数" name="customize">
             <!-- 增加操作 -->
@@ -190,7 +136,7 @@
             </el-table>
         </el-tab-pane>
 
-        <el-tab-pane label="数据库" name="db">
+        <el-tab-pane label="数据库表" name="db">
             <el-button v-if="db.length <= 0" :icon="Plus" type="warning" size="small" @click="addConf('db')"></el-button>
             <el-table :data="db" stripe fit empty-text="空">
                 <el-table-column label="名称" align="center" width="150px">
@@ -251,6 +197,63 @@
                 </el-table-column>
             </el-table>
         </el-tab-pane>
+
+        <el-tab-pane label="统一响应" name="unify_res">
+            <!-- 增加操作 -->
+            <el-button v-if="unify_res.length <= 0" :icon="Plus" type="warning" size="small"
+                @click="addConf('unify')"></el-button>
+            <el-table :data="unify_res" stripe fit empty-text="空">
+                <el-table-column label="名称" align="center" width="150px">
+                    <template #default="scope">
+                        <el-input v-model="scope.row.name" placeholder="名称" />
+                    </template>
+                </el-table-column>
+                <el-table-column label="key" align="center">
+                    <template #default="scope">
+                        <el-input v-model="scope.row.key" placeholder="键" />
+                    </template>
+                </el-table-column>
+                <el-table-column label="value" align="center">
+                    <template #default="scope">
+                        <el-input v-model="scope.row.value" placeholder="值" />
+                    </template>
+                </el-table-column>
+                <el-table-column label="type" align="center">
+                    <template #default="scope">
+                        <el-select v-model="scope.row.type" :placeholder="scope.row.type">
+                            <el-option label="string" value='string' />
+                            <el-option label="number" value='number' />
+                            <el-option label="int" value='int' />
+                            <el-option label="float" value='float' />
+                            <el-option label="boolean" value='boolean' />
+                            <el-option label="null" value='null' />
+                        </el-select>
+                    </template>
+                </el-table-column>
+                <el-table-column label="操作" align="center" width="180px">
+                    <template #default="scope">
+                        <!-- 编辑操作 -->
+                        <el-button :icon="Edit" type="primary" size="small"
+                            v-if="!scope.row.edit && !scope.row.EditDisabled" :disabled="scope.row.EditDisabled"
+                            @click="myEdit(scope.row)"></el-button>
+                        <el-button :icon="Check" type="success" size="small" v-if="scope.row.edit"
+                            @click="unifyCheck(scope.row)"></el-button>
+                        <el-button :icon="Close" type="success" size="small" v-if="scope.row.EditDisabled"
+                            @click="myClose(scope.row)"></el-button>
+                        <!-- 增加操作 -->
+                        <el-button :icon="Plus" type="warning" size="small" @click="addConf('unify')"></el-button>
+                        <!-- 删除操作 -->
+                        <el-button :icon="Delete" type="danger" size="small" v-if="!scope.row.del && !scope.row.delDisabled"
+                            :disabled="scope.row.delDisabled" @click="myDel(scope.row)"></el-button>
+                        <el-button :icon="Check" type="success" size="small" v-if="scope.row.del"
+                            @click="unifyDel(scope.row)"></el-button>
+                        <el-button :icon="Close" type="success" size="small" v-if="scope.row.delDisabled"
+                            @click="myClose(scope.row)"></el-button>
+                    </template>
+                </el-table-column>
+            </el-table>
+        </el-tab-pane>
+
     </el-tabs>
 </template>
 
@@ -266,8 +269,8 @@ export default {
             Plus,
             Delete,
             Close,
-            activeName: '',
-            tabName: { props: { name: '' } },
+            activeName: 'project',
+            tabName: { props: { name: 'project' } },
             host: [],
             project: [],
             db: [],
@@ -275,6 +278,10 @@ export default {
             customize: [],
         }
     },
+    mounted() {
+        this.handleTabClick(this.tabName)
+    },
+
     methods: {
         // 切换tab触发
         async handleTabClick(tab) {
@@ -288,7 +295,7 @@ export default {
                     }).then(
                         function (response) {
                             host = response.data
-                            for (var x in customize) {
+                            for (var x in host) {
                                 host[x].edit = false
                                 host[x].del = false
                                 host[x].delDisabled = false
@@ -310,7 +317,7 @@ export default {
                     }).then(
                         function (response) {
                             project = response.data
-                            for (var x in customize) {
+                            for (var x in project) {
                                 project[x].edit = false
                                 project[x].del = false
                                 project[x].delDisabled = false
@@ -333,7 +340,7 @@ export default {
                     }).then(
                         function (response) {
                             db = response.data
-                            for (var x in customize) {
+                            for (var x in db) {
                                 db[x].edit = false
                                 db[x].del = false
                                 db[x].delDisabled = false
@@ -356,7 +363,7 @@ export default {
                     }).then(
                         function (response) {
                             unify_res = response.data
-                            for (var x in customize) {
+                            for (var x in unify_res) {
                                 unify_res[x].edit = false
                                 unify_res[x].del = false
                                 unify_res[x].delDisabled = false
@@ -413,7 +420,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '添加成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -442,7 +448,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '修改成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -473,7 +478,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '添加成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -502,7 +506,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '修改成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -535,7 +538,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '添加成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -566,7 +568,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '修改成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -599,7 +600,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '添加成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -630,7 +630,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '修改成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -666,7 +665,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '添加成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -700,7 +698,6 @@ export default {
                         ElNotification.success({
                             title: 'Success',
                             message: '修改成功',
-                            offset: 200,
                         })
                         row.edit = false
                         row.delDisabled = false
@@ -727,7 +724,6 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '删除成功',
-                        offset: 200,
                     })
                     row.del = false
                     row.EditDisabled = false
@@ -753,7 +749,6 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '删除成功',
-                        offset: 200,
                     })
                     row.del = false
                     row.EditDisabled = false
@@ -779,7 +774,6 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '删除成功',
-                        offset: 200,
                     })
                     row.del = false
                     row.EditDisabled = false
@@ -805,7 +799,6 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '删除成功',
-                        offset: 200,
                     })
                     row.del = false
                     row.EditDisabled = false
@@ -831,7 +824,6 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '删除成功',
-                        offset: 200,
                     })
                     row.del = false
                     row.EditDisabled = false
@@ -934,17 +926,3 @@ export default {
     }
 }
 </script>
-
-<style>
-.el-input__inner {
-    color: black;
-}
-
-.el-form-item__label {
-    color: black;
-}
-
-.el-table__body-wrapper {
-    color: black;
-}
-</style>

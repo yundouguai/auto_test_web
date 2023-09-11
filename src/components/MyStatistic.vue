@@ -1,6 +1,6 @@
 <template>
     <el-row>
-        <el-col :span="5">
+        <el-col :span="3">
             <div class="statistic-card">
                 <el-statistic :value=tempCount>
                     <template #title>
@@ -16,7 +16,7 @@
                 </el-statistic>
             </div>
         </el-col>
-        <el-col :span="5">
+        <el-col :span="3">
             <div class="statistic-card">
                 <el-statistic :value=caseCount>
                     <template #title>
@@ -32,7 +32,7 @@
                 </el-statistic>
             </div>
         </el-col>
-        <el-col :span="5">
+        <el-col :span="3">
             <div class="statistic-card">
                 <el-statistic :value=ddtCount>
                     <template #title>
@@ -48,7 +48,7 @@
                 </el-statistic>
             </div>
         </el-col>
-        <el-col :span="5">
+        <!-- <el-col :span="5">
             <div class="statistic-card">
                 <el-statistic :value=uiCount>
                     <template #title>
@@ -79,7 +79,7 @@
                     </template>
                 </el-statistic>
             </div>
-        </el-col>
+        </el-col> -->
     </el-row>
 </template>
 
@@ -128,7 +128,7 @@ export default {
     padding: 20px;
     border-radius: 10px;
     /* background-color: rgb(138, 163, 192); */
-    background-image: url('../assets/upload.png');
+    background-color: #F2E9E4;
 }
 
 .statistic-footer {

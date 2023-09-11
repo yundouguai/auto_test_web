@@ -10,6 +10,12 @@
     <br>
     <!-- 模板-har -->
     <el-form v-if="uploadType == 'temp-har'">
+        <el-form-item label="数据源" label-width="100px" :required="true" placeholder="charles">
+            <el-radio-group v-model="harType">
+                <el-radio label="charles">charles</el-radio>
+                <el-radio label="chrome">chrome</el-radio>
+            </el-radio-group>
+        </el-form-item>
         <el-form-item label="模板名称" label-width="100px" :required="true" placeholder="">
             <el-input v-model="tempName" />
         </el-form-item>
@@ -65,12 +71,12 @@
     <el-upload drag :auto-upload="false" :action="uploadUrl" :http-request="upload" :limit="1" ref="upload"
         :accept="fileType" :on-success="onSuccess" :on-error="onError">
         <el-icon class="el-icon--upload"><upload-filled /></el-icon>
-        <div class="el-upload__text">将文件拖拽到此处 或者 <em>点击上传</em></div>
+        <div class="el-upload__text"><font color="#F29492">将文件拖拽到此处</font> 或者 <font color="#F29492">点击上传</font></div>
     </el-upload>
     <el-button class="ml-2" type="success" @click="btnSubmit" :loading="submitLoading">上传到服务器</el-button>
 
     <!-- 成功的弹窗 -->
-    <el-dialog v-model='mySuccess' width="50%" title="上传成功">
+    <el-dialog class="confirm" v-model='mySuccess' width="50%" title="上传成功">
         <el-form :model="successData">
             <!-- 模板内容 -->
             <el-form-item label="模板名称 : " v-if="this.uploadType == 'temp-har' || this.uploadType == 'temp-swagger'">
@@ -127,6 +133,7 @@ export default {
             tempName: '',
             tempHost: '',
             projectName: '',
+            harType: 'charles',
             // 上传的基本信息
             uploadUrl: '',
             uploadType: this.uploadType_,
@@ -181,7 +188,7 @@ export default {
         },
         btnSubmit() {
             if (this.uploadType == 'temp-har') {
-                this.uploadUrl = '/template/upload/har?temp_name=' + this.tempName + '&project_name=' + this.projectName
+                this.uploadUrl = '/template/upload/har?temp_name=' + this.tempName + '&project_name=' + this.projectName + '&har_type=' + this.harType
             } else if (this.uploadType == 'temp-swagger') {
                 this.uploadUrl = '/template/upload/swagger/json?host=' + this.tempHost + '&project_name=' + this.projectName
             } else if (this.uploadType == 'case') {
@@ -216,80 +223,20 @@ export default {
 }
 </script>
 
-<style>
-/* 弹窗的 */
-.el-dialog__body {
-    background: url('../assets/upload4.png');
-    background-size: cover;
-}
-
-.el-radio-group {
-    --el-color-primary: rgba(225, 57, 110, 1);
-    color: black;
-}
-
-.el-upload-dragger {
-    opacity: 0.9;
-}
-
-.el-form-item.is-required.asterisk-left {
-    opacity: 0.9;
-}
-
-.el-form-item.asterisk-left {
-    opacity: 0.9;
-}
-
-.el-radio-button {
-    opacity: 0.9;
-}
-
-.el-tabs__content {
-    opacity: 0.9;
-}
-
-.el-textarea__inner {
-    opacity: 0.9;
-}
-
-.el-transfer-panel {
-    opacity: 0.9;
-}
-
-.el-input.el-input-group.el-input-group--prepend {
-    opacity: 0.9;
-}
-
-.monaco-editor.no-user-select.showUnused.showDeprecated.vs-dark {
-    opacity: 0.9;
-}
-
-.demo-collapse {
-    opacity: 0.9;
-}
-
-.el-pagination.is-background {
-    opacity: 0.9;
-    color: black;
-}
-
-.el-collapse-item__header {
-    opacity: 0.9;
-}
-
-.el-collapse-item__wrap {
-    opacity: 0.9;
-}
-
-.el-table__body-wrapper {
-    color: black;
-}
-
-.el-pagination__total.is-first {
-    color: #fff
-}
-
-.el-pagination__goto {
-    color: #fff
+<style scoped>
+.el-upload-demo {
+    height: 220px;
+    width: 100%;
+    border: 1px dashed #DEDEDE;
+    /* border-radius: 4px; */
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: center;
+    border: 1px dashed #2260FF;
+    font-size: 14px;
+    margin-top: 30px;
+    text-align: center;
+    line-height: unset;
 }
 </style>

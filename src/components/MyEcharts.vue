@@ -189,50 +189,50 @@ export default {
         )
 
 
-        // 基于准备好的dom，初始化echarts实例
-        var uiChart = echarts.init(document.getElementById('uiChart'));
+        // // 基于准备好的dom，初始化echarts实例
+        // var uiChart = echarts.init(document.getElementById('uiChart'));
 
-        // 处理数据
-        var uiInitEcharts = JSON.parse(JSON.stringify(this.initEcharts))
-        var yAxisFData = []
-        for (var x in this.uiEcharts) {
-            yAxisFData.push(this.uiEcharts[x].name)
-        }
-        uiInitEcharts.yAxis.data = yAxisFData
+        // // 处理数据
+        // var uiInitEcharts = JSON.parse(JSON.stringify(this.initEcharts))
+        // var yAxisFData = []
+        // for (var x in this.uiEcharts) {
+        //     yAxisFData.push(this.uiEcharts[x].name)
+        // }
+        // uiInitEcharts.yAxis.data = yAxisFData
 
-        // 次数/成功/失败
-        var series_fail = []
-        var series_success = []
-        var series_total = []
-        for (var x in this.uiEcharts) {
-            if (this.uiEcharts[x].fail == 0) {
-                series_fail.push('')
-            } else {
-                series_fail.push(this.uiEcharts[x].fail)
-            }
+        // // 次数/成功/失败
+        // var series_fail = []
+        // var series_success = []
+        // var series_total = []
+        // for (var x in this.uiEcharts) {
+        //     if (this.uiEcharts[x].fail == 0) {
+        //         series_fail.push('')
+        //     } else {
+        //         series_fail.push(this.uiEcharts[x].fail)
+        //     }
 
-            if (this.uiEcharts[x].success == 0) {
-                series_success.push('')
-            } else {
-                series_success.push(this.uiEcharts[x].success)
-            }
+        //     if (this.uiEcharts[x].success == 0) {
+        //         series_success.push('')
+        //     } else {
+        //         series_success.push(this.uiEcharts[x].success)
+        //     }
 
-            if (this.uiEcharts[x].run_order == 0) {
-                series_total.push('')
-            } else {
-                series_total.push(this.uiEcharts[x].run_order)
-            }
+        //     if (this.uiEcharts[x].run_order == 0) {
+        //         series_total.push('')
+        //     } else {
+        //         series_total.push(this.uiEcharts[x].run_order)
+        //     }
 
-        }
-        uiInitEcharts.title.text = 'UI统计数据'
-        uiInitEcharts.series[0].data = series_fail
-        uiInitEcharts.series[1].data = series_success
-        uiInitEcharts.series[2].data = series_total
+        // }
+        // uiInitEcharts.title.text = 'UI统计数据'
+        // uiInitEcharts.series[0].data = series_fail
+        // uiInitEcharts.series[1].data = series_success
+        // uiInitEcharts.series[2].data = series_total
 
-        // 绘制图表
-        uiChart.setOption(
-            uiInitEcharts
-        )
+        // // 绘制图表
+        // uiChart.setOption(
+        //     uiInitEcharts
+        // )
     },
 
     methods: {

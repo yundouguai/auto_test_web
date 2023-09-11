@@ -20,7 +20,7 @@
             </el-table-column>
             <el-table-column label="用例名称" prop="name" width="420px">
                 <template #default="scope">
-                    <div v-if="scope.row.name && scope.row.edit">{{ scope.row.temp_name }}-<font color="#E1396E">{{
+                    <div v-if="scope.row.name && scope.row.edit">{{ scope.row.temp_name }}-<font color="#F29492">{{
                         scope.row.case_name }}</font>
                     </div>
                     <el-input v-model="scope.row.case_name" placeholder="可输入" v-if="scope.row.edit == false"
@@ -48,27 +48,58 @@
                         size="small" @click="scope.row.percentage = 0" />
                 </template>
             </el-table-column>
-            <el-table-column label="操作" align="center" width="520">
+            <el-table-column label="操作" align="center" width="470">
                 <template #default="scope">
-                    <el-button type="success" plain :loading="scope.row.runLoading" @click="setDialogVisible(scope.row)">运行
-                    </el-button>&nbsp;
+                    <el-tooltip content="运行用例" placement="top-end" effect="customized">
+                        <el-button :icon="CircleCheck" type="success" plain :loading="scope.row.runLoading"
+                            @click="setDialogVisible(scope.row)">
+                        </el-button>
+                    </el-tooltip>
                     <el-button-group class="ml-4">
-                        <el-button type="primary" plain @click="getCaseData(scope.row)"
-                            :loading="scope.row.dataLoading">详情</el-button>
-                        <el-button type="primary" plain @click="copyDialogVisible(scope.row)"
-                            :loading="scope.row.copyLoading">复制</el-button>
-                        <el-button type="primary" plain @click="getGather(scope.row)"
-                            :loading="scope.row.gatherLoading">数据</el-button>
+                        <el-tooltip content="用例详情，可编辑数据" placement="top-end" effect="customized">
+                            <el-button :icon="Edit" type="primary" plain @click="getCaseData(scope.row)"
+                                :loading="scope.row.dataLoading"></el-button>
+                        </el-tooltip>
+
+                        <el-popover title="确定复制？" placement="top" trigger="focus">
+                            <div style="text-align: right; margin: 0">
+                                <el-button size="small" type="primary" @click="copyCase(scope.row)">是</el-button>
+                            </div>
+                            <template #reference>
+                                <el-button :loading="scope.row.copyLoading" :icon="DocumentCopy" type="primary"
+                                    plain></el-button>
+                            </template>
+                        </el-popover>
+
+                        <el-tooltip content="用例对应的数据集，没有则404" placement="top-start" effect="customized">
+                            <el-button :icon="Postcard" type="primary" plain @click="getGather(scope.row)"
+                                :loading="scope.row.gatherLoading"></el-button>
+                        </el-tooltip>
+
+                        <el-tooltip content="用例执行的时序表" placement="top-start" effect="customized">
+                            <el-button :icon="More" type="primary" plain @click="schedule(scope.row)"
+                                :loading="scope.row.scheduleLoading"></el-button>
+                        </el-tooltip>
+
                         <el-popconfirm width="250" confirm-button-text="数据集EXCEL" cancel-button-text="原用例JSON"
                             confirm-button-type="primary" cancel-button-type="primary" @cancel="caseDown(scope.row)"
                             @confirm="caseDataSet(scope.row)" :icon="Download" icon-color="#626AEF" title="下载用例">
                             <template #reference>
-                                <el-button type="primary" plain>下载</el-button>
+                                <el-button :icon="Download" type="primary" plain></el-button>
                             </template>
                         </el-popconfirm>
-                    </el-button-group>&nbsp;
-                    <el-button type="danger" plain :loading="scope.row.delLoading" @click="delDialogVisible(scope.row)">删除
-                    </el-button>&nbsp;
+
+                    </el-button-group>
+
+                    <el-popover title="确定删除？" placement="top" trigger="focus">
+                        <div style="text-align: right; margin: 0">
+                            <el-button size="small" type="primary" @click="delCase(scope.row)">是</el-button>
+                        </div>
+                        <template #reference>
+                            <el-button :loading="scope.row.delLoading" :icon="Delete" type="danger" plain></el-button>
+                        </template>
+                    </el-popover>
+
                     <el-button type="Info" plain>
                         <el-link :href="scope.row.allureReport" target="_blank" :underline="false">报告</el-link>
                     </el-button>
@@ -81,33 +112,21 @@
             :total=caseTotal @size-change="handleSizeChange" @current-change="handleCurrentChange" />
 
         <!-- 详情弹窗 -->
-        <el-dialog v-model='myDialog' width="90%" :title="caseId + ' ' + dataTitle">
+        <el-dialog class="details" v-model='myDialog' width="90%" :title="caseId + ' ' + dataTitle">
             <!-- <div class="el-dialog-div"> -->
             <case-data v-if="myDialog" :case-data="thisCaseData" :case-id="caseId"></case-data>
             <!-- </div> -->
         </el-dialog>
         <!-- 运行用例弹窗 -->
-        <el-dialog v-model="dialogVisible" title="Tips" width="50%">
-            <span>执行用例 [ {{ caseId }} - {{ caseName }} ]</span>
+        <el-dialog class="confirm" v-model="dialogVisible" :title="'执行用例' + caseId + '-' + caseName" width="50%"
+            @close="closeRunCase">
+            <el-select v-model="settingVirtualId" placeholder="选择环境" @visible-change="selectSetting">
+                <el-option v-for="item in settingInfoList" :key="item.setting_name" :label="item.setting_name"
+                    :value="item.virtual_id"></el-option>
+            </el-select>
             <br>
             <br>
-            <el-table :data="tempHosts" stripe fit empty-text="空">
-                <el-table-column label="TempHost" prop="temp_host">
-                </el-table-column>
-                <el-table-column label="WholeHost">
-                    <template #default="scope">
-                        <el-select v-model="scope.row.whole_host" placeholder="选择域名" @visible-change="handleVisibleChange">
-                            <el-option v-for="item in hosts" :key="item.host" :label="item.host"
-                                :value="item.host"></el-option>
-                        </el-select>
-                    </template>
-                </el-table-column>
-                <el-table-column label="替换" align="center" width="70px">
-                    <template #default="scope">
-                        <el-checkbox v-model=scope.row.change />
-                    </template>
-                </el-table-column>
-            </el-table>
+            <run-api-case v-if="dialogVisible" :setting-info="settingInfo"></run-api-case>
             <template #footer>
                 <span class="dialog-footer">
                     <el-button @click="dialogVisible = false">取消</el-button>
@@ -115,29 +134,14 @@
                 </span>
             </template>
         </el-dialog>
-        <!-- 复制用例弹窗 -->
-        <el-dialog v-model="setCopyDialogVisible" title="Tips" width="30%">
-            <span>复制用例 [ {{ caseId }} - {{ caseName }} ]</span>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="setCopyDialogVisible = false">取消</el-button>
-                    <el-button type="primary" @click="copyCase(caseRow)">确认</el-button>
-                </span>
-            </template>
-        </el-dialog>
         <!-- 数据集的弹窗 -->
-        <el-dialog v-model="gatherDialog" :title="caseId + '-' + caseName + '-数据集'" v-if="gatherDialog" width="70%">
+        <el-dialog class="confirm" v-model="gatherDialog" :title="caseId + '-' + caseName + '-数据集'" v-if="gatherDialog"
+            width="50%">
             <my-gather :gather-data="gatherData" :case-id="caseId"></my-gather>
         </el-dialog>
-        <!-- 删除的窗口 -->
-        <el-dialog v-model="delDialog" title="Tips" width="30%">
-            <span>删除用例 [ {{ caseId }} - {{ caseName }} ]</span>
-            <template #footer>
-                <span class="dialog-footer">
-                    <el-button @click="delDialog = false">取消</el-button>
-                    <el-button type="primary" @click="delCase(caseRow)">确认</el-button>
-                </span>
-            </template>
+        <!-- 用例时序图弹窗 -->
+        <el-dialog v-model='scheduleDialog' width="50%" :title="caseId + ' ' + dataTitle">
+            <my-case-schedule v-if="scheduleDialog" :schedule-data="scheduleData"></my-case-schedule>
         </el-dialog>
     </div>
 </template>
@@ -145,10 +149,12 @@
 <script>
 
 import CaseData from './CaseData.vue'
+import MyCaseSchedule from './MyCaseSchedule.vue'
 import MyGather from './MyGather.vue'
+import RunApiCase from './runApiCase.vue'
 import { ElNotification } from 'element-plus'
 import { ElMessage } from 'element-plus'
-import { Edit, Check, Download, Close } from '@element-plus/icons-vue'
+import { Edit, Check, Download, Close, Document, DocumentCopy, Postcard, Delete, CircleCheck, More } from '@element-plus/icons-vue'
 export default {
     name: "MyCaseInfo",
     props: {
@@ -160,7 +166,9 @@ export default {
 
     components: {
         CaseData,
-        MyGather
+        MyGather,
+        RunApiCase,
+        MyCaseSchedule
     },
 
     data() {
@@ -169,14 +177,17 @@ export default {
             Check,
             Download,
             Close,
+            Document,
+            DocumentCopy,
+            Postcard,
+            Delete,
+            CircleCheck,
+            More,
             loading: !this.caseInfo ? true : false,
             myDialog: false,
             thisCaseData: [],
             caseId: null,
             dataTitle: null,
-            dialogVisible: false,
-            setCopyDialogVisible: false,
-            delDialog: false,
             caseName: null,
             caseRow: null,
             gatherDialog: false,
@@ -184,31 +195,51 @@ export default {
             page: 1,
             size: 10,
             likeCaseName: null,
-            tempHosts: [],
-            hosts: []
+            settingInfo: {},
+            settingInfoList: [],
+            settingVirtualId: null,
+            scheduleDialog: false,
+            scheduleData: [],
         }
     },
 
     methods: {
-        async handleVisibleChange(val) {
-            if (!val) {
+        // 选择环境
+        async selectSetting(val) {
+            if (val) {
                 return
             }
-            var hosts
-            await this.$http({
-                url: '/conf/get/host',
-                method: 'GET',
-            }).then(
-                function (response) {
-                    hosts = response.data
+
+            for (var x in this.settingInfoList) {
+                if (this.settingInfoList[x].virtual_id == this.settingVirtualId) {
+                    this.settingInfo = JSON.parse(JSON.stringify(this.settingInfoList[x]))
                 }
+            }
+
+            await this.$http({
+                url: '/runCase/set/api/setting/info',
+                method: 'PUT',
+                params: {
+                    setting_list_id: this.settingInfo.setting_list_id,
+                    id_card: this.settingInfo.id_card,
+                }
+            }).then(
+                // function (response) {
+                //     projects = response.data
+                // }
             ).catch(
                 function (error) {
                     ElMessage.error(error.message)
                 }
             )
-            this.hosts = hosts
         },
+        // 关闭弹窗
+        closeRunCase() {
+            this.settingVirtualId = null
+            this.settingInfo = {}
+            this.settingInfoList = []
+        },
+
         // 调用父级方法
         async handleSizeChange(size) {
             this.size = size
@@ -231,7 +262,6 @@ export default {
                         ElNotification.warning({
                             title: 'Warning',
                             message: '没有运行这个用例[ ' + row.case_id + ' ]',
-                            offset: 200,
                         })
                         row.percentage = 0
                         row.percentageStatus = 'success'
@@ -240,7 +270,6 @@ export default {
                         ElNotification.warning({
                             title: 'Warning',
                             message: '用例[ ' + row.case_id + ' ]已停止',
-                            offset: 200,
                         })
                     }
                 }
@@ -263,7 +292,6 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '修改成功',
-                        offset: 200,
                     })
                 }
             ).catch(
@@ -285,19 +313,13 @@ export default {
             this.caseId = row.case_id
             this.caseRow = row
 
-            this.hosts = []
-            this.tempHosts = []
-            var hosts = []
+            var settingInfoList = []
             await this.$http({
-                url: '/runCase/temp/host?case_id=' + this.caseId,
+                url: '/runCase/get/api/setting/info?case_id=' + this.caseId,
                 method: 'GET',
             }).then(
                 function (response) {
-                    for (var x in response.data) {
-                        if (!hosts.includes(response.data[x].host)) {
-                            hosts.push(response.data[x].host)
-                        }
-                    }
+                    settingInfoList = response.data
                 }
             ).catch(
                 function (error) {
@@ -305,26 +327,11 @@ export default {
                 }
             )
 
-            for (var x in hosts) {
-                this.tempHosts.push({
-                    temp_host: hosts[x],
-                    whole_host: null,
-                    change: false
-                })
-            }
-        },
-        // 删除窗口
-        delDialogVisible(row) {
-            this.delDialog = true
-            this.caseName = row.name
-            this.caseId = row.case_id
-            this.caseRow = row
+            this.settingInfoList = settingInfoList
         },
         // 删除用例
         async delCase(row) {
-            var flag = false
             row.delLoading = true
-            this.delDialog = false
             await this.$http({
                 url: '/caseService/del/' + row.case_id,
                 method: 'DELETE',
@@ -333,31 +340,40 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '用例[ ' + row.name + ' ] 删除成功',
-                        offset: 200,
                     })
-                    flag = true
                 }
             ).catch(function (error) {
                 ElMessage.error(error.message)
             })
-
-            if (flag) {
-                for (var x in this.caseInfo) {
-                    if (this.caseInfo[x].case_id == row.case_id) {
-                        this.caseInfo.splice(x, 1)
-                        break
-                    }
-                }
-            }
-
             row.delLoading = false
+            this.get_case()
         },
-        // 复制窗口
-        copyDialogVisible(row) {
-            this.setCopyDialogVisible = true
-            this.caseName = row.name
+        // 用例执行时序表
+        async schedule(row) {
+            row.scheduleLoading = true
             this.caseId = row.case_id
-            this.caseRow = row
+            this.dataTitle = row.name
+
+            var res = []
+            await this.$http({
+                url: '/runCase/get/case/schedule',
+                method: "GET",
+                params: {
+                    case_id: row.case_id
+                }
+            }).then(
+                function (response) {
+                    res = response.data
+                }
+            ).catch(
+                function (error) {
+                    ElMessage.error(error.message)
+                    row.gatherLoading = false
+                })
+
+            this.scheduleData = res
+            this.scheduleDialog = true
+            row.scheduleLoading = false
         },
         // 获取数据集
         async getGather(row) {
@@ -438,9 +454,7 @@ export default {
         },
         // 复制测试用例
         async copyCase(row) {
-            this.setCopyDialogVisible = false
             row.copyLoading = true
-            console.log(row);
             await this.$http({
                 url: '/caseService/copy/case',
                 method: 'GET',
@@ -452,7 +466,6 @@ export default {
                     ElNotification.success({
                         title: 'Success',
                         message: '用例[ ' + row.name + ' ] 复制成功 新用例名称 [ ' + response.data.case_name + ' ]',
-                        offset: 200,
                     })
                     row.copyLoading = false
                 }
@@ -460,6 +473,7 @@ export default {
                 ElMessage.error(error.message)
                 row.copyLoading = false
             })
+            this.get_case()
         },
 
         // 用例详情数据
@@ -504,14 +518,13 @@ export default {
             ElNotification.success({
                 title: 'Success',
                 message: '开始执行 用例ID: ' + row.case_id,
-                offset: 200,
             })
             await this.$http({
                 url: '/runCase/case',
                 method: "POST",
                 data: JSON.stringify({
                     case_ids: [row.case_id],
-                    temp_hosts: this.tempHosts
+                    setting_list_id: this.settingInfo.setting_list_id
                 }),
                 headers: {
                     'content-type': "application/json"
@@ -549,7 +562,6 @@ export default {
                         ElNotification.error({
                             title: 'Error',
                             message: '用例\n[ ' + row.case_id + '-' + row.name + ' ] 执行失败',
-                            offset: 200,
                         })
                     }
                 }
@@ -558,7 +570,6 @@ export default {
                 ElNotification.error({
                     title: 'Error',
                     message: '执行失败 用例ID: ' + row.case_id,
-                    offset: 200,
                 })
                 row.runLoading = false
             })
@@ -592,5 +603,13 @@ export default {
 .el-dialog-div {
     height: 65vh;
     overflow: auto;
+}
+
+.el-progress.is-success {
+    --el-color-success: #7dcea0;
+}
+
+.el-progress.is-warning {
+    --el-color-warning: #F29492;
 }
 </style>

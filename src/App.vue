@@ -11,8 +11,13 @@ import MyUiTempInfo from "./components/MyUiTempInfo.vue"
 import MyEcharts from "./components/MyEcharts.vue"
 import MyEchartsFree from "./components/MyEchartsFree.vue"
 import MyStatistic from "./components/MyStatistic.vue"
+import MySettingSet from "./components/MySettingSet.vue"
+import Login from "./components/Login.vue"
 import { ElMessage } from 'element-plus'
-import { Check, Close } from '@element-plus/icons-vue'
+import { Check, Close, Histogram, List, UploadFilled, Crop, Grid, HelpFilled, Tools, Edit, UserFilled } from '@element-plus/icons-vue'
+import { ref, watch, computed } from 'vue';
+import { useStore, mapState } from 'vuex';
+
 // import { useDark, useToggle } from '@vueuse/core'
 export default {
   components: {
@@ -26,34 +31,50 @@ export default {
     MyUiTempInfo,
     MyEcharts,
     MyEchartsFree,
-    MyStatistic
+    MyStatistic,
+    MySettingSet,
+    Login
   },
   data() {
     return {
       Check,
       Close,
+      Histogram,
+      List,
+      UploadFilled,
+      Tools,
+      Edit,
+      HelpFilled,
+      Grid,
+      Crop,
+      UserFilled,
       // 判断哪个按钮点击了
       clickStatus: {
         isTemp: false,
         isCase: false,
         isUiTemp: false,
+        isSetting: false,
       },
       // 存获取的数据
       tempInfo: [],
       caseInfo: [],
       uiTempInfo: [],
+      settingInfo: [],
       timer: null,
       // 全局参数变更弹窗
       dialogParamsCharge: false,
       dialogUpload: false,
       dialogMonaco: false,
+      dialogLogin: false,
       mySwitch: true,
       dialogTempSuit: false,
       dialogWholeConf: false,
       tempInfoLoading: false,
       caseInfoLoading: false,
+      settingLoading: false,
       uiCaseInfoLoading: false,
       caseStatus: false,
+      dialogSettingSet: false,
       // isDark: useDark(),
 
       tempTotal: 0,
@@ -88,7 +109,8 @@ export default {
     return {
       'get_temp': this.getTempInfo,
       'get_case': this.getCaseInfo,
-      'get_ui_case': this.getUiCaseInfo
+      'get_ui_case': this.getUiCaseInfo,
+      'get_setting': this.getSettingSet
     };
   },
   methods: {
@@ -249,9 +271,8 @@ export default {
         this.clickStatus[x] = false
       }
       // 再改单个状态为true
-      if (!this.isTemp) {
-        this.clickStatus['isTemp'] = true
-      }
+      this.clickStatus['isTemp'] = true
+
       this.tempInfoLoading = false
       this.ifMain = true
     },
@@ -305,9 +326,8 @@ export default {
         this.clickStatus[x] = false
       }
       // 再改单个状态为true
-      if (!this.isTemp) {
-        this.clickStatus['isUiTemp'] = true
-      }
+      this.clickStatus['isUiTemp'] = true
+
       this.uiCaseInfoLoading = false
       this.ifMain = true
     },
@@ -344,6 +364,7 @@ export default {
         this.caseInfo[x].delLoading = false
         this.caseInfo[x].dataLoading = false
         this.caseInfo[x].gatherLoading = false
+        this.caseInfo[x].scheduleLoading = false
         this.caseInfo[x].edit = true
         this.caseInfo[x].checkLoading = false
         this.caseInfo[x].percentage = 0
@@ -358,9 +379,8 @@ export default {
         this.clickStatus[x] = false
       }
       // 再改单个状态为true
-      if (!this.isTemp) {
-        this.clickStatus['isCase'] = true
-      }
+      this.clickStatus['isCase'] = true
+
       this.caseInfoLoading = false
       this.ifMain = true
 
@@ -368,6 +388,47 @@ export default {
       this.start(5000)
 
     },
+    async getSettingSet() {
+      // 关闭定时器
+      this.end()
+      this.echarts = false
+      this.freeEcharts = false
+
+      this.settingLoading = true
+      var setting = []
+      await this.$http({
+        url: '/setting/get/setting',
+        method: 'GET',
+      }).then(
+        function (response) {
+          setting = response.data
+          for (var x in setting) {
+            setting[x].edit = false
+            setting[x].del = false
+            setting[x].delDisabled = false
+            setting[x].EditDisabled = false
+          }
+        }
+      ).catch(
+        function (error) {
+          ElMessage.error(error.message)
+
+        }
+      )
+      this.settingLoading = false
+      this.settingInfo = setting
+
+
+      // 所有的状态都改为false
+      for (var x in this.clickStatus) {
+        this.clickStatus[x] = false
+      }
+      // 再改单个状态为true
+      this.clickStatus['isSettingSet'] = true
+
+      this.ifMain = true
+    },
+
     getCaseStatus(key_id = null) {
       var caseInfo = this.caseInfo
       this.$http({
@@ -402,12 +463,29 @@ export default {
       this.uploadFileType = type_
       this.fileType = fileType
     },
-
     // 暗黑模式
     // toggleDark() {
     //   useToggle(this.isDark)
     // },
-  }
+  },
+  computed: {
+    ...mapState(['tokenExpired']), // 映射 tokenExpired 到组件的计算属性
+  },
+
+  watch: {
+    tokenExpired(newTokenExpiredValue) {
+        this.dialogLogin = newTokenExpiredValue
+        console.log('this.dialogLogin')
+        console.log(this.dialogLogin)
+    },
+  },
+  setup() {
+    const store = useStore();
+    console.log(store.state.dialogLogin)
+    return {
+      store,
+    };
+  },
 }
 </script>
 
@@ -418,36 +496,44 @@ export default {
       <el-affix :offset="10">
         <el-button-group class="ml-4">
           <!-- 计数 -->
-          <el-button type="default" @click="getECharts()" :loading="echartsLoading">计数</el-button>
+          <el-button type="default" :icon="Histogram" @click="getECharts()" :loading="echartsLoading">计数</el-button>
           <!-- 关系 -->
-          <el-button type="default" @click="getEChartsFree()" :loading="freeEchartsLoading">关系</el-button>
+          <el-button type="default" :icon="Histogram" @click="getEChartsFree()"
+            :loading="freeEchartsLoading">关系</el-button>
         </el-button-group>&nbsp;
 
         <el-button-group>
           <!-- 模板信息 -->
-          <el-button type="primary" @click="getTempInfo()" :loading="tempInfoLoading">API模板列表</el-button>
+          <el-button type="primary" :icon="List" @click="getTempInfo()" :loading="tempInfoLoading">API模板</el-button>
           <!-- 用例信息 -->
-          <el-button type="primary" @click="getCaseInfo()" :loading="caseInfoLoading">API用例列表</el-button>
+          <el-button type="primary" :icon="List" @click="getCaseInfo()" :loading="caseInfoLoading">API用例</el-button>
           <!-- 文件上传 -->
-          <el-button type="primary" @click="uploadFile('temp-har', '.har')">模板用例上传</el-button>
+          <el-button type="primary" :icon="UploadFilled" @click="uploadFile('temp-har', '.har')">数据上传</el-button>
           <!-- 模板组装 -->
-          <el-button type="primary" @click="dialogTempSuit = true">模板场景组装</el-button>
+          <el-button type="primary" :icon="Grid" @click="dialogTempSuit = true">模板组装</el-button>
+          <!-- 参数变更 -->
+          <el-button type="primary" :icon="Crop" @click="dialogParamsCharge = true">参数变更</el-button>
         </el-button-group>&nbsp;
 
         <el-button-group class="ml-4">
           <!-- UI用例信息 -->
-          <el-button type="success" @click="getUiCaseInfo()" :loading="uiCaseInfoLoading">UI用例列表</el-button>
+          <!-- <el-button type="success" :icon="List" @click="getUiCaseInfo()" :loading="uiCaseInfoLoading">UI用例</el-button> -->
           <!-- 编辑器 -->
-          <el-button type="success" @click="dialogMonaco = true">UI脚本编辑</el-button>
+          <el-button type="success" :icon="Edit" @click="dialogMonaco = true">UI脚本</el-button>
           <!-- 文件上传 -->
-          <el-button type="success" @click="uploadFile('ui-case', '.xlsx')">UI数据上传</el-button>
+          <!-- <el-button type="success" :icon="UploadFilled" @click="uploadFile('ui-case', '.xlsx')">数据上传</el-button> -->
         </el-button-group>&nbsp;
 
         <el-button-group class="ml-4">
-          <!-- 参数变更 -->
-          <el-button type="warning" @click="dialogParamsCharge = true">参数变更</el-button>
+          <!-- 环境组装 -->
+          <el-button type="warning" :icon="HelpFilled" @click="getSettingSet()" :loading="settingLoading">环境</el-button>
           <!-- 全局配置 -->
-          <el-button type="warning" @click="dialogWholeConf = true">全局配置</el-button>
+          <el-button type="warning" :icon="Tools" @click="dialogWholeConf = true">配置</el-button>
+        </el-button-group>
+
+        <el-button-group class="ml-4">
+          <!-- 登录 -->
+          <el-button type="success" :icon="UserFilled" @click="store.state.dialogLogin = true">登录</el-button>
         </el-button-group>
 
         <!-- 开关灯 -->
@@ -461,111 +547,90 @@ export default {
       <my-case-info v-if="clickStatus['isCase']" :case-info="caseInfo" :case-total="caseTotal"></my-case-info>
       <my-ui-temp-info v-if="clickStatus['isUiTemp']" :ui-temp-info="uiTempInfo"
         :ui-temp-total="uiTempTotal"></my-ui-temp-info>
+      <my-setting-set v-if="clickStatus['isSettingSet']" :setting-info="settingInfo"></my-setting-set>
+
       <my-statistic v-if="echarts || freeEcharts"></my-statistic>
       <br>
       <my-echarts v-if="echarts" :api-echarts="apiEcharts" :ui-echarts="uiEcharts"></my-echarts>
       <my-echarts-free v-if="freeEcharts" :api-free="apiFree" :ui-free="uiFree"></my-echarts-free>
     </el-main>
-    <!-- 字段变更的弹窗 -->
-    <el-dialog v-model='dialogParamsCharge' width="70%" title="全局参数变更" :close-on-click-modal=false
-      :close-on-press-escape=false @close='dialogParamsCharge = false' draggable>
+    <!-- 参数变更的弹窗 -->
+    <el-dialog class="cg" v-model='dialogParamsCharge' width="70%" title="参数变更" :close-on-click-modal=false
+      @close='dialogParamsCharge = false' draggable>
       <my-change v-if="dialogParamsCharge"></my-change>
     </el-dialog>
     <!-- 文件上传的弹窗 -->
-    <el-dialog v-model='dialogUpload' width="40%" title="文件上传" @close='dialogUpload = false' draggable>
+    <el-dialog class="up" v-model='dialogUpload' width="60%" title="文件上传" @close='dialogUpload = false' draggable>
       <my-upload v-if="dialogUpload" :upload-type_="uploadFileType" :file-type_="fileType"></my-upload>
     </el-dialog>
     <!-- 模板组装的弹窗 -->
-    <el-dialog v-model="dialogTempSuit" width="80%" title="选择接口组装新模板，或创建空模板" :close-on-click-modal=false
-      :close-on-press-escape=false @close='dialogTempSuit = false' draggable>
+    <el-dialog class="tf" v-model="dialogTempSuit" width="80%" title="选择接口组装新模板，或创建空模板" :close-on-click-modal=false
+      @close='dialogTempSuit = false' draggable>
       <my-transfer v-if="dialogTempSuit"></my-transfer>
     </el-dialog>
-    <!-- 全局配置弹窗 -->
-    <el-dialog v-model="dialogWholeConf" width="50%" title="全局配置项" draggable>
+    <!-- 配置弹窗 -->
+    <el-dialog class="wc" v-model="dialogWholeConf" width="60%" title="配置项" draggable>
       <my-whole-conf v-if="dialogWholeConf"></my-whole-conf>
     </el-dialog>
     <!-- 编辑器 -->
-    <el-dialog v-model='dialogMonaco' width="70%" title="Python页面编辑器" :close-on-click-modal=false
-      :close-on-press-escape=false @close='dialogMonaco = false' draggable>
+    <el-dialog class="mc" v-model='dialogMonaco' width="70%" title="Python页面编辑器" :close-on-click-modal=false
+      @close='dialogMonaco = false' draggable>
       <monaco-editor v-if="dialogMonaco" :ui-temp-value="uiTempValue"></monaco-editor>
+    </el-dialog>
+    <!-- 登录 -->
+    <el-dialog class="lg" v-model='store.state.dialogLogin' width="40%" title="登 录" :close-on-click-modal=false :show-close='false' center draggable>
+      <login v-if="store.state.dialogLogin" :ui-temp-value="uiTempValue"></login>
     </el-dialog>
   </el-container>
 </template>
 
 
-<style scoped>
-.el-switch {
-  position: absolute;
-  right: 80px;
-}
-
+<style>
 main {
-  background-color: rgba(192, 192, 192, 0.4);
+  background-color: rgba(192, 192, 192, 0.65);
   border-radius: 20px
 }
 
-.el-button--primary {
-  /* --el-button-bg-color: rgba(235, 150, 173, 1); */
-  --el-button-bg-color: rgba(225, 57, 110, 1);
-  --el-button-hover-bg-color: rgba(225, 57, 110, 1);
-  --el-button-active-border-color: rgba(225, 57, 110, 1);
-  --el-button-active-bg-color: rgba(225, 57, 110, 1);
-  --el-button-border-color: none;
-  color: rgb(13, 1, 28);
+.el-dialog.tf {
+  /* background-color: rgb(255, 255, 255); */
+  background: url("./assets/details.png");
+  background-size: 100%;
 }
 
-.el-button--success {
-  /* --el-button-bg-color: rgba(235, 150, 173, 1); */
-  --el-button-bg-color: rgba(72, 121, 135, 1);
-  --el-button-hover-bg-color: rgba(72, 121, 135, 1);
-  --el-button-active-border-color: rgba(72, 121, 135, 1);
-  --el-button-active-bg-color: rgba(72, 121, 135, 1);
-  --el-button-border-color: none;
-  color: rgb(13, 1, 28);
+.el-dialog.up {
+  /* background-color: rgb(255, 255, 255); */
+  background: url("./assets/details.png");
+  background-size: 100%;
 }
 
-.el-button--warning {
-  /* --el-button-bg-color: rgba(235, 150, 173, 1); */
-  --el-button-bg-color: rgba(178, 118, 130, 1);
-  --el-button-hover-bg-color: rgba(178, 118, 130, 1);
-  --el-button-active-border-color: rgba(178, 118, 130, 1);
-  --el-button-active-bg-color: rgba(178, 118, 130, 1);
-  --el-button-border-color: none;
-  color: rgb(13, 1, 28);
+.el-dialog.wc {
+  /* background-color: rgb(255, 255, 255); */
+  background: url("./assets/details.png");
+  background-size: 100%;
+  --el-text-color-primary: aliceblue;
 }
 
-
-.el-button--default {
-  /* --el-button-bg-color: rgba(235, 150, 173, 1); */
-  --el-button-bg-color: rgba(221, 160, 104, 1);
-  --el-button-hover-bg-color: rgba(221, 160, 104, 1);
-  --el-button-active-border-color: rgba(221, 160, 104, 1);
-  --el-button-active-bg-color: rgba(221, 160, 104, 1);
-  --el-button-hover-text-color: rgb(255, 255, 255);
-  --el-button-border-color: none;
-  color: rgb(13, 1, 28);
+.el-dialog.cg {
+  background: url("./assets/details.png");
+  background-size: 100%;
+  --el-text-color-primary: aliceblue;
 }
 
-
-
-
-
-
-/* .el-button--primary:hover {
-  --el-button-hover-bg-color: rgba(225, 57, 110, 1);
-} */
-
-
-/* .logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
+.el-dialog.lg {
+  background: url("./assets/monaco.png");
+  background-size: 100%;
+  --el-text-color-primary: rgb(0, 0, 0);
 }
-.logo:hover {
-  filter: drop-shadow(0 0 2em #959999aa);
+.dialog-title{
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
 }
-.logo.vue:hover {
-  filter: drop-shadow(0 0 2em #42b883aa);
-} */
+
+.centered-title {
+  margin: 0;
+}
+
 </style>
+
